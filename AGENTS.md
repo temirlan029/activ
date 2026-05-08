@@ -485,3 +485,175 @@ conn.commit()
 | API | FastAPI + Uvicorn |
 | Фронт | React 19 + Vite + Tailwind CSS 3 + React Router + Chart.js + react-chartjs-2 |
 | Лаунчер | `asyncio.gather(bot.start(), uvicorn.serve())` в одном процессе |
+
+---
+
+# 🚀 Как залить на хостинг (VPS Ubuntu 22.04)
+
+## ⚠️ ВАЖНО: Discord заблокирован на российских хостингах!
+
+Discord API заблокирован Роскомнадзором с октября 2024.
+**НЕ используйте российские VPS** (SmartApe, Beget, Reg.ru, Timeweb и т.д.) —
+бот не сможет подключиться к Discord (`SSL connection timeout`).
+
+**Подходящие хостинги (зарубежные):**
+- Aeza (Нидерланды/Германия) — ~200₽/мес, принимает карты РФ
+- VDSina (Амстердам) — ~200₽/мес, принимает карты РФ
+- Hetzner (Германия) — €4/мес, нужна зарубежная карта
+- DigitalOcean (Амстердам/Франкфурт) — $6/мес
+
+## Проверка что Discord работает на VPS
+
+Перед деплоем обязательно проверь:
+```bash
+curl -I https://discord.com --connect-timeout 10
+```
+Должен вернуться `HTTP/2 200` или редирект. Если `SSL connection timeout` —
+Discord заблокирован, меняй хостинг.
+
+---
+
+## Автоматический деплой (одна команда)
+
+После подключения по SSH к чистому Ubuntu 22.04:
+
+```bash
+ssh root@IP_СЕРВЕРА
+curl -fsSL https://raw.githubusercontent.com/temirlan029/activ/main/deploy_to_vps.sh | bash
+```
+
+Скрипт `deploy_to_vps.sh` лежит в корне репо и делает всё:
+- `apt update && apt upgrade -y`
+- ставит `python3 python3-pip python3-venv git curl nodejs` (Node 20.x)
+- клонирует репо в `/root/neverloveactiv`
+- создаёт `venv`, ставит `requirements.txt`
+- собирает фронт: `npm install && npm run build`
+- копирует `.env.example → .env`
+- создаёт `data/` директорию
+- создаёт systemd unit `/etc/systemd/system/neverlove.service`
+- `systemctl enable neverlove`
+- настраивает `ufw` (порты 22 и 8000)
+
+---
+
+## После автодеплоя (обязательные шаги)
+
+### 1. Поставить nano (если нет)
+```bash
+apt install -y nano
+```
+
+### 2. Прописать токен в .env
+```bash
+nano /root/neverloveactiv/.env
+```
+Заменить `твой_токен_бота_сюда` на реальный токен Discord-бота:
+```
+DISCORD_TOKEN=MTUw...твой_реальный_токен
+PORT=8000
+```
+Сохранить: `Ctrl+X`, `Y`, `Enter`.
+
+Альтернатива через `sed` (одной командой):
+```bash
+sed -i 's/твой_токен_бота_сюда/РЕАЛЬНЫЙ_ТОКЕН/g' /root/neverloveactiv/.env
+```
+
+### 3. Инициализировать БД (если ругается `no such table: users`)
+```bash
+cd /root/neverloveactiv
+source venv/bin/activate
+python -c "from database import init_db; import asyncio; asyncio.run(init_db())"
+```
+
+### 4. Запустить сервис
+```bash
+systemctl start neverlove
+systemctl status neverlove
+```
+
+Должно быть `Active: active (running)`.
+
+### 5. Дашборд доступен по
+```
+http://IP_СЕРВЕРА:8000
+```
+
+---
+
+## Управление сервисом
+
+| Команда | Что делает |
+|---|---|
+| `systemctl start neverlove` | Запустить |
+| `systemctl stop neverlove` | Остановить |
+| `systemctl restart neverlove` | Перезапустить |
+| `systemctl status neverlove` | Статус |
+| `journalctl -u neverlove -f` | Логи в реальном времени (Ctrl+C — выйти) |
+| `journalctl -u neverlove -n 100 --no-pager` | Последние 100 строк логов |
+| `cat /root/neverloveactiv/bot_log.txt` | Лог бота |
+
+---
+
+## Обновление кода после `git push`
+
+```bash
+cd /root/neverloveactiv
+git pull
+source venv/bin/activate
+pip install -r requirements.txt
+cd frontend && npm install && npm run build && cd ..
+systemctl restart neverlove
+```
+
+---
+
+## Диагностика проблем
+
+В репо есть `diagnose.sh` — проверяет всё:
+```bash
+cd /root/neverloveactiv && bash diagnose.sh
+```
+
+### Симптом: на сайте `Ошибка сервера: 500` или пустой список
+Бот не подключился к Discord. Смотри `cat bot_log.txt`.
+Если `Connection timeout to host https://discord.com` — Discord заблокирован
+провайдером, меняй хостинг (см. начало раздела).
+
+### Симптом: `sqlite3.OperationalError: no such table: users`
+Первый запуск, БД ещё не создана. Делай шаг 3 (init_db) выше.
+
+### Симптом: `nano: command not found`
+```bash
+apt install -y nano
+```
+Или используй `vi` / `sed`.
+
+### Симптом: `ssh: command not found` на Windows
+- Поставить OpenSSH: `Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0`
+- Или использовать **Git Bash** (идёт с Git for Windows)
+- Или **PuTTY**
+
+---
+
+## Файлы деплоя в репо
+
+| Файл | Назначение |
+|---|---|
+| `deploy_to_vps.sh` | Автоматический скрипт первоначального деплоя |
+| `diagnose.sh` | Скрипт диагностики (что сломалось) |
+| `DEPLOY.md` | Подробная пошаговая инструкция (старая, для DigitalOcean) |
+| `AGENTS.md` | Этот файл — главная документация |
+
+---
+
+## История неудачного деплоя на SmartApe (2026-05-08)
+
+- VPS: `185.9.147.15` (s1626149.smartape-vps.com), Ubuntu 22.04
+- Деплой прошёл успешно, FastAPI поднялся, фронт собрался
+- **БОТ НЕ ПОДКЛЮЧИЛСЯ:** `Connection timeout to host https://discord.com/api/v10/users/@me`
+- Причина: SmartApe — российский хостинг, Discord HTTPS блокируется РКН
+- Решение: возврат средств у SmartApe + переезд на зарубежный VPS
+
+**Урок:** перед покупкой VPS всегда проверять, что `curl -I https://discord.com`
+с тестового сервера хостинга работает. Многие хостинги дают триал.
