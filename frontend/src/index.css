@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #05050f;
+  color: #e0e0e0;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Скроллбар */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d0d1f; }
+::-webkit-scrollbar-thumb { background: #b400ff; border-radius: 3px; }
+
+/* Неоновое свечение */
+.neon-cyan  { text-shadow: 0 0 8px #00e5ff, 0 0 20px #00e5ff55; }
+.neon-purple { text-shadow: 0 0 8px #b400ff, 0 0 20px #b400ff55; }
+
+/* Анимация пульса для заголовка */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.85; }
+}
+.flicker { animation: flicker 3s ease-in-out infinite; }
+
+/* Строки таблицы — индикация активности */
+.activity-row {
+  border-bottom: 1px solid #1a1a3a;
+  transition: background-color 0.15s ease;
+}
+.activity-row:last-child { border-bottom: none; }
+
+.activity-high {
+  background: linear-gradient(90deg, rgba(0, 255, 127, 0.10) 0%, rgba(0, 255, 127, 0.03) 100%);
+  border-left: 3px solid #00ff7f;
+}
+.activity-high:hover { background: rgba(0, 255, 127, 0.13); }
+
+.activity-mid {
+  background: linear-gradient(90deg, rgba(255, 214, 0, 0.10) 0%, rgba(255, 214, 0, 0.03) 100%);
+  border-left: 3px solid #ffd600;
+}
+.activity-mid:hover { background: rgba(255, 214, 0, 0.13); }
+
+.activity-low {
+  background: linear-gradient(90deg, rgba(255, 23, 68, 0.08) 0%, rgba(255, 23, 68, 0.02) 100%);
+  border-left: 3px solid #ff1744;
+}
+.activity-low:hover { background: rgba(255, 23, 68, 0.10); }
+
+.activity-time-high { color: #00ff7f; font-weight: 600; }
+.activity-time-mid  { color: #ffd600; font-weight: 600; }
+.activity-time-low  { color: #ff5577; font-weight: 600; }

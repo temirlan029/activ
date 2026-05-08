@@ -1,0 +1,12 @@
+.env
+data/
+__pycache__/
+*.pyc
+*.pyo
+frontend/node_modules/
+frontend/dist/
+bot_log.txt
+activhistory.txt
+*.db
+*.db-shm
+*.db-wal

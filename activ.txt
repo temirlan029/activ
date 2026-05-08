@@ -1,0 +1,45 @@
+Role: Expert Full-stack Developer (Python, Discord.py, FastAPI, React/Next.js).
+
+Task: Create a Discord Activity Tracker system for a single server (120+ members) that monitors voice and text activity 24/7 and displays it on a web dashboard.
+
+Technical Requirements:
+
+Bot (Python/discord.py):
+
+Track voice activity: Record time spent in voice channels. Must handle: switching channels, deafen/mute states, and bot restarts (persistent tracking).
+
+Track text activity: Count messages across all accessible channels.
+
+Database: Use SQLite for simplicity and 24/7 reliability. Create a schema for user_id, username, voice_seconds, message_count, and last_active.
+
+Backend API (FastAPI):
+
+Create a simple API to serve the database data to the website.
+
+Endpoint: /top15 which returns the top 15 users for both voice and text activity.
+
+Frontend (React/Tailwind CSS):
+
+A single-page dashboard with two tables: "Top 15 Voice" and "Top 15 Text".
+
+Visual Logic: Apply row background colors based on total hours:
+
+Green: High activity (> 10 hours).
+
+Yellow: Moderate activity (3–10 hours).
+
+Red: Low activity (0–3 hours).
+
+Minimalist/Dark "Cyberpunk" aesthetic.
+
+Instructions for the code:
+
+Write clean, modular code.
+
+For the voice tracker, implement a robust logic using on_voice_state_update to calculate duration accurately.
+
+Provide a clear explanation of how to run both the bot and the web server simultaneously.
+
+Use a single SQLite database file for both the bot and the API to ensure real-time data sync.
+
+Important: All user-facing text (website headers, table columns, button labels, and bot messages) must be in Russian.
