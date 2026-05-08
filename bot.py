@@ -226,6 +226,23 @@ async def scan_guild_voice(guild: discord.Guild) -> int:
     return count
 
 
+async def sync_all_members(guild: discord.Guild) -> int:
+    """
+    Регистрирует ВСЕХ участников сервера в БД (даже без активности).
+    Чтобы дашборд показывал каждого, кто состоит на сервере.
+    """
+    count = 0
+    for member in guild.members:
+        if member.bot:
+            continue
+        try:
+            await upsert_member(member)
+            count += 1
+        except Exception as exc:
+            log(f"[SYNC] ОШИБКА для {member}: {exc}")
+    return count
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 #  СОБЫТИЯ ЖИЗНЕННОГО ЦИКЛА БОТА
 # ──────────────────────────────────────────────────────────────────────────────
@@ -250,6 +267,8 @@ async def on_ready():
                 log(f"[БОТ] Сервер {guild_id} не найден (бот не добавлен)")
                 continue
             log(f"[БОТ] Подключён к серверу: {guild.name}")
+            synced = await sync_all_members(guild)
+            log(f"[БОТ] Зарегистрировано участников: {synced}")
             total += await scan_guild_voice(guild)
 
         if not flush_loop.is_running():
@@ -283,6 +302,18 @@ async def on_guild_join(guild: discord.Guild):
 # ──────────────────────────────────────────────────────────────────────────────
 #  ОБНОВЛЕНИЕ УЧАСТНИКА (роли, ник, аватар)
 # ──────────────────────────────────────────────────────────────────────────────
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    """Новый участник зашёл на сервер — регистрируем в БД."""
+    if member.bot or member.guild.id not in GUILD_IDS:
+        return
+    try:
+        await upsert_member(member)
+        log(f"[JOIN] Зарегистрирован новый участник: {member.display_name}")
+    except Exception as exc:
+        log(f"[JOIN] ОШИБКА при регистрации {member.id}: {exc}")
+
 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):

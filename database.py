@@ -457,14 +457,14 @@ async def get_all_roles() -> list[dict]:
 
 
 async def get_members(limit: int | None = None) -> list[dict]:
-    """Общий список участников, отсортированный по активности (войс → сообщения)."""
+    """Общий список участников, отсортированный по активности (войс → сообщения).
+    Показывает ВСЕХ зарегистрированных, включая с нулевой активностью."""
     sql = """
         SELECT user_id, username, avatar_url,
                top_role_name, top_role_color, server_joined_at,
                voice_seconds, message_count, last_active
         FROM users
-        WHERE voice_seconds > 0 OR message_count > 0
-        ORDER BY voice_seconds DESC, message_count DESC
+        ORDER BY voice_seconds DESC, message_count DESC, username ASC
     """
     params: tuple = ()
     if limit and limit > 0:
